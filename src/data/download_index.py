@@ -21,16 +21,16 @@ setup_logger()
 # ARGO Index URL
 ARGO_INDEX_URL = "https://data-argo.ifremer.fr/ar_index_global_prof.txt"
 
-# Indian Ocean Bounds
-INDIAN_OCEAN_BOUNDS = {
-    'lat_min': -40.0,  # 40°S
-    'lat_max': 30.0,   # 30°N
-    'lon_min': 20.0,   # 20°E
-    'lon_max': 120.0   # 120°E
-}
+# Global Coverage - All Ocean Regions
+# No geographic filtering - download from all regions:
+# - Pacific Ocean
+# - Atlantic Ocean
+# - Indian Ocean
+# - Southern Ocean
+# - Arctic Ocean
 
-# Date range
-DATE_START = "2020-01-01"
+# Date range: 2018-2024 (6 years for ~20-25 GB dataset)
+DATE_START = "2018-01-01"
 DATE_END = "2024-12-31"
 
 
@@ -94,29 +94,9 @@ def parse_index_file(index_file):
         raise
 
 
-def filter_indian_ocean(df):
-    """Filter profiles for Indian Ocean region"""
-    logger.info("Filtering for Indian Ocean region...")
-    
-    # Filter by latitude and longitude
-    mask = (
-        (df['latitude'] >= INDIAN_OCEAN_BOUNDS['lat_min']) &
-        (df['latitude'] <= INDIAN_OCEAN_BOUNDS['lat_max']) &
-        (df['longitude'] >= INDIAN_OCEAN_BOUNDS['lon_min']) &
-        (df['longitude'] <= INDIAN_OCEAN_BOUNDS['lon_max'])
-    )
-    
-    filtered_df = df[mask].copy()
-    
-    logger.info(f"Profiles in Indian Ocean: {len(filtered_df):,}")
-    logger.info(f"Reduction: {(1 - len(filtered_df)/len(df)) * 100:.1f}%")
-    
-    return filtered_df
-
-
 def filter_by_date(df):
-    """Filter profiles by date range"""
-    logger.info(f"Filtering for dates: {DATE_START} to {DATE_END}")
+    """Filter profiles by date range (GLOBAL coverage - all regions)"""
+    logger.info(f"Filtering for dates: {DATE_START} to {DATE_END} (GLOBAL coverage)")
     
     # Convert date column to datetime
     df['date'] = pd.to_datetime(df['date'], format='%Y%m%d%H%M%S', errors='coerce')
@@ -135,7 +115,7 @@ def filter_by_date(df):
 
 def save_filtered_index(df):
     """Save filtered index to CSV"""
-    output_file = Path(settings.data_raw_dir) / "index" / "indian_ocean_2020_2024.csv"
+    output_file = Path(settings.data_raw_dir) / "index" / "global_argo_2018_2024.csv"
     
     df.to_csv(output_file, index=False)
     logger.success(f"Filtered index saved: {output_file}")
@@ -168,8 +148,9 @@ def print_statistics(df):
 def main():
     """Main execution"""
     logger.info("Starting ARGO Index Download and Filtering")
-    logger.info(f"Target Region: Indian Ocean")
+    logger.info(f"Target Region: GLOBAL (All Ocean Regions)")
     logger.info(f"Target Period: {DATE_START} to {DATE_END}")
+    logger.info(f"Expected Dataset Size: 20-25 GB")
     
     try:
         # Step 1: Download index
@@ -178,16 +159,13 @@ def main():
         # Step 2: Parse index
         df = parse_index_file(index_file)
         
-        # Step 3: Filter by region
-        df = filter_indian_ocean(df)
-        
-        # Step 4: Filter by date
+        # Step 3: Filter by date (GLOBAL coverage - no region filter)
         df = filter_by_date(df)
         
-        # Step 5: Save filtered index
+        # Step 4: Save filtered index
         output_file = save_filtered_index(df)
         
-        # Step 6: Print statistics
+        # Step 5: Print statistics
         print_statistics(df)
         
         logger.success("Index download and filtering complete!")

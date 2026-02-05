@@ -24,15 +24,16 @@ setup_logger()
 # ARGO GDAC Base URL
 ARGO_BASE_URL = "https://data-argo.ifremer.fr"
 
-# Download settings
-MAX_WORKERS = 5  # Parallel downloads
+# Download settings for GLOBAL dataset (20-25 GB)
+MAX_WORKERS = 10  # Parallel downloads (increased for faster download)
 CHUNK_SIZE = 8192  # Download chunk size
 RETRY_ATTEMPTS = 3  # Retry failed downloads
+BATCH_SIZE = 1000  # Process in batches for progress tracking
 
 
 def load_filtered_index():
-    """Load the filtered index file"""
-    index_file = Path(settings.data_raw_dir) / "index" / "indian_ocean_2020_2024.csv"
+    """Load the filtered index file (GLOBAL coverage)"""
+    index_file = Path(settings.data_raw_dir) / "index" / "global_argo_2018_2024.csv"
     
     if not index_file.exists():
         logger.error(f"Filtered index not found: {index_file}")
@@ -40,7 +41,7 @@ def load_filtered_index():
         raise FileNotFoundError(f"Index file not found: {index_file}")
     
     df = pd.read_csv(index_file)
-    logger.info(f"Loaded {len(df):,} profiles from index")
+    logger.info(f"Loaded {len(df):,} profiles from GLOBAL index (2018-2024)")
     
     return df
 
@@ -182,17 +183,19 @@ def get_download_statistics():
 
 def main():
     """Main execution"""
-    logger.info("Starting ARGO NetCDF Download")
+    logger.info("Starting ARGO NetCDF Download (GLOBAL Dataset)")
+    logger.info("Target: 20-25 GB, All Ocean Regions, 2018-2024")
     
     try:
         # Load filtered index
         df = load_filtered_index()
         
-        # Download files (start with 100 for testing)
-        logger.info("Starting with 100 files for testing...")
-        logger.info("To download all files, modify the limit parameter")
+        # Download ALL files for global coverage
+        logger.info("Downloading COMPLETE global dataset...")
+        logger.info(f"Expected download time: 4-6 hours (depends on internet speed)")
+        logger.info(f"Parallel workers: {MAX_WORKERS}")
         
-        download_netcdf_files(df, limit=100)
+        download_netcdf_files(df, limit=None)  # No limit - download all
         
         # Show statistics
         get_download_statistics()
