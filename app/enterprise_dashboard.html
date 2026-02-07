@@ -1,0 +1,1188 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FloatChat Ultra - Enterprise Ocean Analytics Platform</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+    <!-- Leaflet.js for Maps -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+
+    <!-- Google Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap"
+        rel="stylesheet">
+
+    <style>
+        * {
+            font-family: 'Inter', sans-serif;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .font-mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Dark Mode Variables */
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafc;
+            --bg-card: #ffffff;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --border-color: #e2e8f0;
+            --shadow: rgba(0, 0, 0, 0.1);
+        }
+
+        .dark-mode {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-card: #1e293b;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --border-color: #334155;
+            --shadow: rgba(0, 0, 0, 0.3);
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+        }
+
+        .card {
+            background-color: var(--bg-card);
+            border-color: var(--border-color);
+        }
+
+        .sidebar {
+            background-color: var(--bg-card);
+            border-right: 1px solid var(--border-color);
+        }
+
+        /* Smooth Animations */
+        .fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .hover-lift {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .hover-lift:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 25px -5px var(--shadow);
+        }
+
+        /* Gradient Text */
+        .gradient-text {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            border-radius: 10px;
+        }
+
+        /* Map Container */
+        #map {
+            height: 500px;
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        /* Chart Containers */
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+
+        /* Stat Card Animation */
+        .stat-card {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, #6366f1, transparent);
+            animation: shimmer 3s infinite;
+        }
+
+        @keyframes shimmer {
+            to {
+                left: 100%;
+            }
+        }
+
+        /* Pulse Animation */
+        .pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        /* Sidebar Navigation */
+        .nav-item {
+            transition: all 0.2s ease;
+        }
+
+        .nav-item:hover {
+            background-color: var(--bg-secondary);
+            transform: translateX(4px);
+        }
+
+        .nav-item.active {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+        }
+
+        /* Toggle Switch */
+        .toggle-switch {
+            position: relative;
+            width: 60px;
+            height: 30px;
+            background-color: var(--border-color);
+            border-radius: 15px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .toggle-switch.active {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        }
+
+        .toggle-slider {
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 24px;
+            height: 24px;
+            background-color: white;
+            border-radius: 50%;
+            transition: transform 0.3s;
+        }
+
+        .toggle-switch.active .toggle-slider {
+            transform: translateX(30px);
+        }
+    </style>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#eef2ff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="min-h-screen">
+
+    <!-- Sidebar -->
+    <div class="fixed left-0 top-0 h-full w-64 sidebar shadow-xl z-50">
+        <div class="p-6">
+            <!-- Logo -->
+            <div class="mb-8">
+                <h1 class="text-2xl font-bold gradient-text">🌊 FloatChat</h1>
+                <p class="text-xs text-gray-500 mt-1">Enterprise Analytics</p>
+            </div>
+
+            <!-- Dark Mode Toggle -->
+            <div class="mb-6 flex items-center justify-between p-3 rounded-lg card border">
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-moon text-sm"></i>
+                    <span class="text-sm font-medium">Dark Mode</span>
+                </div>
+                <div class="toggle-switch" id="darkModeToggle" onclick="toggleDarkMode()">
+                    <div class="toggle-slider"></div>
+                </div>
+            </div>
+
+            <!-- Navigation -->
+            <nav class="space-y-2">
+                <a href="#" class="nav-item active flex items-center gap-3 p-3 rounded-lg"
+                    onclick="showSection('dashboard')">
+                    <i class="fas fa-chart-line w-5"></i>
+                    <span class="font-medium">Dashboard</span>
+                </a>
+                <a href="#" class="nav-item flex items-center gap-3 p-3 rounded-lg" onclick="showSection('analytics')">
+                    <i class="fas fa-chart-bar w-5"></i>
+                    <span class="font-medium">Analytics</span>
+                </a>
+                <a href="#" class="nav-item flex items-center gap-3 p-3 rounded-lg" onclick="showSection('map')">
+                    <i class="fas fa-map w-5"></i>
+                    <span class="font-medium">Global Map</span>
+                </a>
+                <a href="#" class="nav-item flex items-center gap-3 p-3 rounded-lg" onclick="showSection('chat')">
+                    <i class="fas fa-comments w-5"></i>
+                    <span class="font-medium">AI Assistant</span>
+                </a>
+                <a href="#" class="nav-item flex items-center gap-3 p-3 rounded-lg" onclick="showSection('data')">
+                    <i class="fas fa-database w-5"></i>
+                    <span class="font-medium">Data Explorer</span>
+                </a>
+                <a href="#" class="nav-item flex items-center gap-3 p-3 rounded-lg" onclick="showSection('reports')">
+                    <i class="fas fa-file-alt w-5"></i>
+                    <span class="font-medium">Reports</span>
+                </a>
+            </nav>
+
+            <!-- System Status -->
+            <div class="mt-8 p-4 rounded-lg card border">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs font-semibold text-gray-500">SYSTEM STATUS</span>
+                    <span class="flex items-center gap-1">
+                        <span class="w-2 h-2 bg-green-500 rounded-full pulse"></span>
+                        <span class="text-xs text-green-600 font-semibold">Online</span>
+                    </span>
+                </div>
+                <div class="space-y-2 text-xs">
+                    <div class="flex justify-between">
+                        <span class="text-gray-500">Database</span>
+                        <span class="font-semibold text-green-600">Connected</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-500">AI Engine</span>
+                        <span class="font-semibold text-green-600">Active</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-500">Data Sync</span>
+                        <span class="font-semibold text-yellow-600">Pending</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="ml-64 min-h-screen">
+
+        <!-- Header -->
+        <header class="card border-b sticky top-0 z-40">
+            <div class="px-8 py-4 flex items-center justify-between">
+                <div>
+                    <h2 class="text-2xl font-bold">Ocean Analytics Dashboard</h2>
+                    <p class="text-sm text-gray-500 mt-1">Real-time ARGO Data Insights • Global Coverage</p>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="flex items-center gap-2 px-4 py-2 rounded-lg card border">
+                        <i class="fas fa-clock text-sm text-gray-500"></i>
+                        <span class="text-sm font-mono" id="currentTime"></span>
+                    </div>
+                    <button
+                        class="px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg font-semibold hover:shadow-lg transition-all">
+                        <i class="fas fa-download mr-2"></i>Export Data
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Dashboard Section -->
+        <div id="dashboard-section" class="p-8">
+
+            <!-- KPI Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+
+                <!-- Card 1 -->
+                <div class="card border rounded-2xl p-6 hover-lift stat-card">
+                    <div class="flex items-center justify-between mb-4">
+                        <div
+                            class="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
+                            <i class="fas fa-water text-white text-xl"></i>
+                        </div>
+                        <span class="text-xs font-semibold text-green-600 flex items-center gap-1">
+                            <i class="fas fa-arrow-up"></i> 12.5%
+                        </span>
+                    </div>
+                    <div class="text-3xl font-bold gradient-text mb-1">1,234</div>
+                    <div class="text-sm text-gray-500 font-medium">Active ARGO Floats</div>
+                    <div class="mt-4 h-1 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full"></div>
+                </div>
+
+                <!-- Card 2 -->
+                <div class="card border rounded-2xl p-6 hover-lift stat-card">
+                    <div class="flex items-center justify-between mb-4">
+                        <div
+                            class="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center">
+                            <i class="fas fa-chart-line text-white text-xl"></i>
+                        </div>
+                        <span class="text-xs font-semibold text-green-600 flex items-center gap-1">
+                            <i class="fas fa-arrow-up"></i> 8.3%
+                        </span>
+                    </div>
+                    <div class="text-3xl font-bold gradient-text mb-1">456K</div>
+                    <div class="text-sm text-gray-500 font-medium">Ocean Profiles</div>
+                    <div class="mt-4 h-1 bg-gradient-to-r from-purple-500 to-purple-600 rounded-full"></div>
+                </div>
+
+                <!-- Card 3 -->
+                <div class="card border rounded-2xl p-6 hover-lift stat-card">
+                    <div class="flex items-center justify-between mb-4">
+                        <div
+                            class="w-12 h-12 bg-gradient-to-br from-pink-500 to-pink-600 rounded-xl flex items-center justify-center">
+                            <i class="fas fa-database text-white text-xl"></i>
+                        </div>
+                        <span class="text-xs font-semibold text-green-600 flex items-center gap-1">
+                            <i class="fas fa-arrow-up"></i> 15.7%
+                        </span>
+                    </div>
+                    <div class="text-3xl font-bold gradient-text mb-1">45.2M</div>
+                    <div class="text-sm text-gray-500 font-medium">Total Measurements</div>
+                    <div class="mt-4 h-1 bg-gradient-to-r from-pink-500 to-pink-600 rounded-full"></div>
+                </div>
+
+                <!-- Card 4 -->
+                <div class="card border rounded-2xl p-6 hover-lift stat-card">
+                    <div class="flex items-center justify-between mb-4">
+                        <div
+                            class="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center">
+                            <i class="fas fa-globe text-white text-xl"></i>
+                        </div>
+                        <span class="text-xs font-semibold text-gray-500">100%</span>
+                    </div>
+                    <div class="text-3xl font-bold gradient-text mb-1">5</div>
+                    <div class="text-sm text-gray-500 font-medium">Ocean Regions</div>
+                    <div class="mt-4 h-1 bg-gradient-to-r from-green-500 to-green-600 rounded-full"></div>
+                </div>
+
+            </div>
+
+            <!-- Charts Row 1 -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+
+                <!-- Temperature Trends -->
+                <div class="card border rounded-2xl p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-bold">Temperature Trends</h3>
+                        <select class="px-3 py-1 rounded-lg card border text-sm">
+                            <option>Last 7 Days</option>
+                            <option>Last 30 Days</option>
+                            <option>Last 90 Days</option>
+                            <option>Last Year</option>
+                        </select>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="tempTrendChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Ocean Distribution -->
+                <div class="card border rounded-2xl p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-bold">Profile Distribution by Ocean</h3>
+                        <button class="px-3 py-1 rounded-lg card border text-sm hover:bg-gray-100">
+                            <i class="fas fa-sync-alt mr-1"></i>Refresh
+                        </button>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="oceanDistChart"></canvas>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Charts Row 2 -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+
+                <!-- Salinity Levels -->
+                <div class="card border rounded-2xl p-6">
+                    <h3 class="text-lg font-bold mb-4">Salinity Levels</h3>
+                    <div class="chart-container">
+                        <canvas id="salinityChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Depth Analysis -->
+                <div class="card border rounded-2xl p-6">
+                    <h3 class="text-lg font-bold mb-4">Depth Analysis</h3>
+                    <div class="chart-container">
+                        <canvas id="depthChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Data Quality -->
+                <div class="card border rounded-2xl p-6">
+                    <h3 class="text-lg font-bold mb-4">Data Quality Score</h3>
+                    <div class="chart-container">
+                        <canvas id="qualityChart"></canvas>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="card border rounded-2xl p-6">
+                <h3 class="text-lg font-bold mb-4">Recent Activity</h3>
+                <div class="space-y-3">
+                    <div class="flex items-center gap-4 p-3 rounded-lg hover:bg-gray-50">
+                        <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                            <i class="fas fa-upload text-blue-600"></i>
+                        </div>
+                        <div class="flex-1">
+                            <div class="font-semibold text-sm">New data uploaded</div>
+                            <div class="text-xs text-gray-500">Pacific Ocean • 2,450 new profiles</div>
+                        </div>
+                        <div class="text-xs text-gray-500">2 min ago</div>
+                    </div>
+                    <div class="flex items-center gap-4 p-3 rounded-lg hover:bg-gray-50">
+                        <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                            <i class="fas fa-check text-green-600"></i>
+                        </div>
+                        <div class="flex-1">
+                            <div class="font-semibold text-sm">Quality check completed</div>
+                            <div class="text-xs text-gray-500">Atlantic Ocean • 98.5% pass rate</div>
+                        </div>
+                        <div class="text-xs text-gray-500">15 min ago</div>
+                    </div>
+                    <div class="flex items-center gap-4 p-3 rounded-lg hover:bg-gray-50">
+                        <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                            <i class="fas fa-robot text-purple-600"></i>
+                        </div>
+                        <div class="flex-1">
+                            <div class="font-semibold text-sm">AI analysis generated</div>
+                            <div class="text-xs text-gray-500">Indian Ocean • Temperature anomaly detected</div>
+                        </div>
+                        <div class="text-xs text-gray-500">1 hour ago</div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Analytics Section -->
+        <div id="analytics-section" class="p-8 hidden">
+            <h2 class="text-2xl font-bold mb-6">Advanced Analytics</h2>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+                <!-- Heatmap -->
+                <div class="card border rounded-2xl p-6">
+                    <h3 class="text-lg font-bold mb-4">Temperature Heatmap</h3>
+                    <div class="chart-container" style="height: 400px;">
+                        <canvas id="heatmapChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Scatter Plot -->
+                <div class="card border rounded-2xl p-6">
+                    <h3 class="text-lg font-bold mb-4">Salinity vs Temperature</h3>
+                    <div class="chart-container" style="height: 400px;">
+                        <canvas id="scatterChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Radar Chart -->
+                <div class="card border rounded-2xl p-6">
+                    <h3 class="text-lg font-bold mb-4">Ocean Comparison</h3>
+                    <div class="chart-container" style="height: 400px;">
+                        <canvas id="radarChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Bubble Chart -->
+                <div class="card border rounded-2xl p-6">
+                    <h3 class="text-lg font-bold mb-4">Multi-dimensional Analysis</h3>
+                    <div class="chart-container" style="height: 400px;">
+                        <canvas id="bubbleChart"></canvas>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Map Section -->
+        <div id="map-section" class="p-8 hidden">
+            <h2 class="text-2xl font-bold mb-6">Global Ocean Map</h2>
+
+            <div class="card border rounded-2xl p-6 mb-6">
+                <div class="flex items-center gap-4 mb-4">
+                    <button class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold">
+                        <i class="fas fa-layer-group mr-2"></i>All Floats
+                    </button>
+                    <button class="px-4 py-2 card border rounded-lg text-sm font-semibold">
+                        <i class="fas fa-thermometer-half mr-2"></i>Temperature
+                    </button>
+                    <button class="px-4 py-2 card border rounded-lg text-sm font-semibold">
+                        <i class="fas fa-tint mr-2"></i>Salinity
+                    </button>
+                    <button class="px-4 py-2 card border rounded-lg text-sm font-semibold">
+                        <i class="fas fa-arrows-alt-v mr-2"></i>Depth
+                    </button>
+                </div>
+                <div id="map"></div>
+            </div>
+
+            <!-- Map Legend -->
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                <div class="card border rounded-xl p-4 text-center">
+                    <div class="text-2xl font-bold text-blue-600">234</div>
+                    <div class="text-xs text-gray-500 mt-1">Pacific Floats</div>
+                </div>
+                <div class="card border rounded-xl p-4 text-center">
+                    <div class="text-2xl font-bold text-green-600">189</div>
+                    <div class="text-xs text-gray-500 mt-1">Atlantic Floats</div>
+                </div>
+                <div class="card border rounded-xl p-4 text-center">
+                    <div class="text-2xl font-bold text-purple-600">156</div>
+                    <div class="text-xs text-gray-500 mt-1">Indian Floats</div>
+                </div>
+                <div class="card border rounded-xl p-4 text-center">
+                    <div class="text-2xl font-bold text-cyan-600">98</div>
+                    <div class="text-xs text-gray-500 mt-1">Southern Floats</div>
+                </div>
+                <div class="card border rounded-xl p-4 text-center">
+                    <div class="text-2xl font-bold text-indigo-600">67</div>
+                    <div class="text-xs text-gray-500 mt-1">Arctic Floats</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat Section -->
+        <div id="chat-section" class="p-8 hidden">
+            <h2 class="text-2xl font-bold mb-6">AI Assistant</h2>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+                <!-- Chat Interface -->
+                <div class="lg:col-span-2">
+                    <div class="card border rounded-2xl p-6">
+                        <div id="chat-messages" class="space-y-4 mb-6 h-96 overflow-y-auto">
+                            <div class="flex gap-3">
+                                <div
+                                    class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
+                                    <i class="fas fa-robot text-white"></i>
+                                </div>
+                                <div class="flex-1 card border rounded-xl p-4">
+                                    <div class="font-semibold text-sm mb-2">FloatChat AI</div>
+                                    <div class="text-sm">👋 Hello! I'm your AI assistant for ARGO ocean data. I can help
+                                        you analyze temperatures, salinity levels, float locations, and generate
+                                        insights. What would you like to know?</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex gap-3">
+                            <input type="text" id="chat-input"
+                                placeholder="Ask about ocean data, trends, or specific regions..."
+                                class="flex-1 px-4 py-3 card border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" />
+                            <button onclick="sendMessage()"
+                                class="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="space-y-4">
+                    <div class="card border rounded-2xl p-6">
+                        <h3 class="font-bold mb-4">Quick Questions</h3>
+                        <div class="space-y-2">
+                            <button onclick="quickQuestion('What is the average temperature in Pacific?')"
+                                class="w-full text-left px-4 py-3 card border rounded-lg hover:bg-gray-50 text-sm">
+                                Average temperature in Pacific
+                            </button>
+                            <button onclick="quickQuestion('Compare salinity levels')"
+                                class="w-full text-left px-4 py-3 card border rounded-lg hover:bg-gray-50 text-sm">
+                                Compare salinity levels
+                            </button>
+                            <button onclick="quickQuestion('Show temperature trends')"
+                                class="w-full text-left px-4 py-3 card border rounded-lg hover:bg-gray-50 text-sm">
+                                Temperature trends
+                            </button>
+                            <button onclick="quickQuestion('Find anomalies')"
+                                class="w-full text-left px-4 py-3 card border rounded-lg hover:bg-gray-50 text-sm">
+                                Detect anomalies
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="card border rounded-2xl p-6">
+                        <h3 class="font-bold mb-4">AI Capabilities</h3>
+                        <div class="space-y-3 text-sm">
+                            <div class="flex items-start gap-2">
+                                <i class="fas fa-check text-green-600 mt-1"></i>
+                                <span>Natural language queries</span>
+                            </div>
+                            <div class="flex items-start gap-2">
+                                <i class="fas fa-check text-green-600 mt-1"></i>
+                                <span>Data visualization generation</span>
+                            </div>
+                            <div class="flex items-start gap-2">
+                                <i class="fas fa-check text-green-600 mt-1"></i>
+                                <span>Trend analysis</span>
+                            </div>
+                            <div class="flex items-start gap-2">
+                                <i class="fas fa-check text-green-600 mt-1"></i>
+                                <span>Anomaly detection</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Data Explorer Section -->
+        <div id="data-section" class="p-8 hidden">
+            <h2 class="text-2xl font-bold mb-6">Data Explorer</h2>
+
+            <div class="card border rounded-2xl p-6 mb-6">
+                <div class="flex items-center gap-4 mb-6">
+                    <input type="text" placeholder="Search floats, profiles, or measurements..."
+                        class="flex-1 px-4 py-2 card border rounded-lg">
+                    <select class="px-4 py-2 card border rounded-lg">
+                        <option>All Oceans</option>
+                        <option>Pacific</option>
+                        <option>Atlantic</option>
+                        <option>Indian</option>
+                        <option>Southern</option>
+                        <option>Arctic</option>
+                    </select>
+                    <select class="px-4 py-2 card border rounded-lg">
+                        <option>Last 7 Days</option>
+                        <option>Last 30 Days</option>
+                        <option>Last 90 Days</option>
+                        <option>Custom Range</option>
+                    </select>
+                    <button class="px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold">
+                        <i class="fas fa-filter mr-2"></i>Apply Filters
+                    </button>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gray-50 dark:bg-gray-800">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Float ID
+                                </th>
+                                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Ocean</th>
+                                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Latitude
+                                </th>
+                                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Longitude
+                                </th>
+                                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Temp (°C)
+                                </th>
+                                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Salinity
+                                </th>
+                                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Depth (m)
+                                </th>
+                                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Date</th>
+                                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Actions
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200">
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 text-sm font-mono">2901234</td>
+                                <td class="px-6 py-4 text-sm">
+                                    <span
+                                        class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-semibold">Pacific</span>
+                                </td>
+                                <td class="px-6 py-4 text-sm">10.5°N</td>
+                                <td class="px-6 py-4 text-sm">120.4°E</td>
+                                <td class="px-6 py-4 text-sm font-semibold text-orange-600">25.3</td>
+                                <td class="px-6 py-4 text-sm">35.2</td>
+                                <td class="px-6 py-4 text-sm">1,000</td>
+                                <td class="px-6 py-4 text-sm">2024-01-15</td>
+                                <td class="px-6 py-4 text-sm">
+                                    <button class="text-blue-600 hover:text-blue-800">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 text-sm font-mono">2901235</td>
+                                <td class="px-6 py-4 text-sm">
+                                    <span
+                                        class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">Atlantic</span>
+                                </td>
+                                <td class="px-6 py-4 text-sm">20.3°S</td>
+                                <td class="px-6 py-4 text-sm">45.6°W</td>
+                                <td class="px-6 py-4 text-sm font-semibold text-blue-600">18.7</td>
+                                <td class="px-6 py-4 text-sm">34.8</td>
+                                <td class="px-6 py-4 text-sm">1,500</td>
+                                <td class="px-6 py-4 text-sm">2024-01-16</td>
+                                <td class="px-6 py-4 text-sm">
+                                    <button class="text-blue-600 hover:text-blue-800">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 text-sm font-mono">2901236</td>
+                                <td class="px-6 py-4 text-sm">
+                                    <span
+                                        class="px-2 py-1 bg-purple-100 text-purple-800 rounded-full text-xs font-semibold">Indian</span>
+                                </td>
+                                <td class="px-6 py-4 text-sm">45.2°N</td>
+                                <td class="px-6 py-4 text-sm">170.1°E</td>
+                                <td class="px-6 py-4 text-sm font-semibold text-cyan-600">12.4</td>
+                                <td class="px-6 py-4 text-sm">33.9</td>
+                                <td class="px-6 py-4 text-sm">800</td>
+                                <td class="px-6 py-4 text-sm">2024-01-17</td>
+                                <td class="px-6 py-4 text-sm">
+                                    <button class="text-blue-600 hover:text-blue-800">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="flex items-center justify-between mt-6">
+                    <div class="text-sm text-gray-500">Showing 1-3 of 456,789 profiles</div>
+                    <div class="flex gap-2">
+                        <button class="px-4 py-2 card border rounded-lg text-sm font-semibold">Previous</button>
+                        <button class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold">1</button>
+                        <button class="px-4 py-2 card border rounded-lg text-sm font-semibold">2</button>
+                        <button class="px-4 py-2 card border rounded-lg text-sm font-semibold">3</button>
+                        <button class="px-4 py-2 card border rounded-lg text-sm font-semibold">Next</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reports Section -->
+        <div id="reports-section" class="p-8 hidden">
+            <h2 class="text-2xl font-bold mb-6">Reports & Exports</h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="card border rounded-2xl p-6 hover-lift cursor-pointer">
+                    <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mb-4">
+                        <i class="fas fa-file-pdf text-blue-600 text-xl"></i>
+                    </div>
+                    <h3 class="font-bold mb-2">Monthly Summary</h3>
+                    <p class="text-sm text-gray-500 mb-4">Comprehensive monthly ocean data analysis</p>
+                    <button class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold">
+                        Generate Report
+                    </button>
+                </div>
+
+                <div class="card border rounded-2xl p-6 hover-lift cursor-pointer">
+                    <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mb-4">
+                        <i class="fas fa-file-excel text-green-600 text-xl"></i>
+                    </div>
+                    <h3 class="font-bold mb-2">Data Export</h3>
+                    <p class="text-sm text-gray-500 mb-4">Export filtered data to Excel/CSV</p>
+                    <button class="w-full px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-semibold">
+                        Export Data
+                    </button>
+                </div>
+
+                <div class="card border rounded-2xl p-6 hover-lift cursor-pointer">
+                    <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center mb-4">
+                        <i class="fas fa-chart-pie text-purple-600 text-xl"></i>
+                    </div>
+                    <h3 class="font-bold mb-2">Custom Analysis</h3>
+                    <p class="text-sm text-gray-500 mb-4">Create custom analytical reports</p>
+                    <button class="w-full px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-semibold">
+                        Create Report
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Dark Mode Toggle
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            document.getElementById('darkModeToggle').classList.toggle('active');
+            localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
+        }
+
+        // Load dark mode preference
+        if (localStorage.getItem('darkMode') === 'true') {
+            document.body.classList.add('dark-mode');
+            document.getElementById('darkModeToggle').classList.add('active');
+        }
+
+        // Section Navigation
+        function showSection(section) {
+            // Hide all sections
+            document.querySelectorAll('[id$="-section"]').forEach(el => el.classList.add('hidden'));
+            // Show selected section
+            document.getElementById(section + '-section').classList.remove('hidden');
+
+            // Update nav active state
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            event.target.closest('.nav-item').classList.add('active');
+
+            // Initialize map if map section
+            if (section === 'map' && !window.mapInitialized) {
+                initMap();
+                window.mapInitialized = true;
+            }
+        }
+
+        // Update Time
+        function updateTime() {
+            const now = new Date();
+            document.getElementById('currentTime').textContent = now.toLocaleTimeString();
+        }
+        setInterval(updateTime, 1000);
+        updateTime();
+
+        // Chat Functions
+        function sendMessage() {
+            const input = document.getElementById('chat-input');
+            const message = input.value.trim();
+            if (!message) return;
+
+            const chatMessages = document.getElementById('chat-messages');
+
+            // User message
+            chatMessages.innerHTML += `
+                <div class="flex gap-3 justify-end">
+                    <div class="flex-1 card border rounded-xl p-4 max-w-md">
+                        <div class="font-semibold text-sm mb-2 text-right">You</div>
+                        <div class="text-sm">${message}</div>
+                    </div>
+                    <div class="w-10 h-10 bg-gradient-to-br from-gray-400 to-gray-600 rounded-full flex items-center justify-center flex-shrink-0">
+                        <i class="fas fa-user text-white"></i>
+                    </div>
+                </div>
+            `;
+
+            // AI response
+            setTimeout(() => {
+                chatMessages.innerHTML += `
+                    <div class="flex gap-3">
+                        <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
+                            <i class="fas fa-robot text-white"></i>
+                        </div>
+                        <div class="flex-1 card border rounded-xl p-4">
+                            <div class="font-semibold text-sm mb-2">FloatChat AI</div>
+                            <div class="text-sm">Great question! Once the ARGO data is fully loaded, I'll provide comprehensive insights about: "${message}". I can analyze patterns, generate visualizations, and detect anomalies!</div>
+                        </div>
+                    </div>
+                `;
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }, 500);
+
+            input.value = '';
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function quickQuestion(question) {
+            document.getElementById('chat-input').value = question;
+            sendMessage();
+        }
+
+        // Enter key support
+        document.addEventListener('DOMContentLoaded', function () {
+            document.getElementById('chat-input').addEventListener('keypress', function (e) {
+                if (e.key === 'Enter') sendMessage();
+            });
+        });
+
+        // Initialize Map
+        function initMap() {
+            const map = L.map('map').setView([20, 0], 2);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+
+            // Sample float locations
+            const floats = [
+                { lat: 10.5, lon: 120.4, name: 'Float 2901234', ocean: 'Pacific' },
+                { lat: -20.3, lon: -45.6, name: 'Float 2901235', ocean: 'Atlantic' },
+                { lat: 45.2, lon: 170.1, name: 'Float 2901236', ocean: 'Indian' },
+                { lat: -35.6, lon: 18.4, name: 'Float 2901237', ocean: 'Southern' },
+                { lat: 60.1, lon: -150.2, name: 'Float 2901238', ocean: 'Arctic' },
+                { lat: 25.0, lon: -80.0, name: 'Float 2901239', ocean: 'Atlantic' },
+                { lat: -10.0, lon: 100.0, name: 'Float 2901240', ocean: 'Indian' },
+                { lat: 35.0, lon: 140.0, name: 'Float 2901241', ocean: 'Pacific' },
+            ];
+
+            floats.forEach(float => {
+                L.circleMarker([float.lat, float.lon], {
+                    radius: 8,
+                    fillColor: '#6366f1',
+                    color: '#fff',
+                    weight: 2,
+                    opacity: 1,
+                    fillOpacity: 0.8
+                }).bindPopup(`
+                    <strong>${float.name}</strong><br>
+                    Ocean: ${float.ocean}<br>
+                    Lat: ${float.lat}°, Lon: ${float.lon}°
+                `).addTo(map);
+            });
+        }
+
+        // Initialize Charts
+        window.onload = function () {
+            const chartColors = {
+                blue: '#6366f1',
+                purple: '#8b5cf6',
+                pink: '#ec4899',
+                green: '#10b981',
+                orange: '#f59e0b',
+                cyan: '#06b6d4'
+            };
+
+            // Temperature Trend Chart
+            new Chart(document.getElementById('tempTrendChart'), {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                    datasets: [{
+                        label: 'Average Temperature (°C)',
+                        data: [18.2, 18.5, 19.1, 19.8, 20.5, 21.2, 21.8, 21.5, 20.9, 20.1, 19.3, 18.6],
+                        borderColor: chartColors.blue,
+                        backgroundColor: chartColors.blue + '20',
+                        fill: true,
+                        tension: 0.4,
+                        borderWidth: 3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } }
+                }
+            });
+
+            // Ocean Distribution Chart
+            new Chart(document.getElementById('oceanDistChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Pacific', 'Atlantic', 'Indian', 'Southern', 'Arctic'],
+                    datasets: [{
+                        data: [35, 28, 22, 10, 5],
+                        backgroundColor: [chartColors.blue, chartColors.green, chartColors.purple, chartColors.cyan, chartColors.orange]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
+                }
+            });
+
+            // Salinity Chart
+            new Chart(document.getElementById('salinityChart'), {
+                type: 'bar',
+                data: {
+                    labels: ['Pacific', 'Atlantic', 'Indian', 'Southern', 'Arctic'],
+                    datasets: [{
+                        label: 'Salinity (PSU)',
+                        data: [34.8, 35.2, 35.5, 34.2, 32.1],
+                        backgroundColor: chartColors.purple,
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } }
+                }
+            });
+
+            // Depth Chart
+            new Chart(document.getElementById('depthChart'), {
+                type: 'line',
+                data: {
+                    labels: ['0-500m', '500-1000m', '1000-1500m', '1500-2000m', '2000m+'],
+                    datasets: [{
+                        label: 'Profiles',
+                        data: [12000, 18000, 15000, 8000, 3000],
+                        borderColor: chartColors.cyan,
+                        backgroundColor: chartColors.cyan + '20',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } }
+                }
+            });
+
+            // Quality Chart
+            new Chart(document.getElementById('qualityChart'), {
+                type: 'polarArea',
+                data: {
+                    labels: ['Excellent', 'Good', 'Fair', 'Poor'],
+                    datasets: [{
+                        data: [65, 25, 8, 2],
+                        backgroundColor: [chartColors.green, chartColors.blue, chartColors.orange, chartColors.pink]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
+                }
+            });
+
+            // Heatmap (using bar chart as approximation)
+            new Chart(document.getElementById('heatmapChart'), {
+                type: 'bar',
+                data: {
+                    labels: ['0-10°C', '10-15°C', '15-20°C', '20-25°C', '25-30°C'],
+                    datasets: [{
+                        label: 'Frequency',
+                        data: [150, 300, 450, 350, 200],
+                        backgroundColor: [chartColors.blue, chartColors.cyan, chartColors.green, chartColors.orange, chartColors.pink],
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } }
+                }
+            });
+
+            // Scatter Chart
+            new Chart(document.getElementById('scatterChart'), {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'Temperature vs Salinity',
+                        data: Array.from({ length: 100 }, () => ({
+                            x: Math.random() * 30,
+                            y: 32 + Math.random() * 4
+                        })),
+                        backgroundColor: chartColors.purple + '80'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { title: { display: true, text: 'Temperature (°C)' } },
+                        y: { title: { display: true, text: 'Salinity (PSU)' } }
+                    }
+                }
+            });
+
+            // Radar Chart
+            new Chart(document.getElementById('radarChart'), {
+                type: 'radar',
+                data: {
+                    labels: ['Temperature', 'Salinity', 'Depth', 'Quality', 'Coverage'],
+                    datasets: [
+                        {
+                            label: 'Pacific',
+                            data: [85, 90, 75, 95, 100],
+                            borderColor: chartColors.blue,
+                            backgroundColor: chartColors.blue + '20'
+                        },
+                        {
+                            label: 'Atlantic',
+                            data: [80, 95, 85, 90, 85],
+                            borderColor: chartColors.green,
+                            backgroundColor: chartColors.green + '20'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+
+            // Bubble Chart
+            new Chart(document.getElementById('bubbleChart'), {
+                type: 'bubble',
+                data: {
+                    datasets: [{
+                        label: 'Ocean Data Points',
+                        data: Array.from({ length: 30 }, () => ({
+                            x: Math.random() * 30,
+                            y: 32 + Math.random() * 4,
+                            r: Math.random() * 20 + 5
+                        })),
+                        backgroundColor: chartColors.pink + '60'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { title: { display: true, text: 'Temperature (°C)' } },
+                        y: { title: { display: true, text: 'Salinity (PSU)' } }
+                    }
+                }
+            });
+        };
+    </script>
+
+</body>
+
+</html>
